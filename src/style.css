@@ -86,10 +86,10 @@ h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
 .token-form label { font-size: 13px; font-weight: 700; }
 .token-field { display: flex; gap: 8px; }
 .token-field input {
-  min-width: 0; flex: 1; height: 44px; padding: 0 13px;
-  border: 1px solid var(--border); border-radius: 10px; outline: none;
+  min-width: 0; flex: 1; height: 52px; padding: 0 16px;
+  border: 1px solid var(--border); border-radius: 12px; outline: none;
   background: #0c1119; color: #f5f7fb;
-  font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px;
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: 16px;
 }
 .token-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42, 171, 238, .12); }
 
@@ -195,6 +195,7 @@ footer a:hover { color: var(--accent-strong); }
   .connect-layout { padding: 28px 0; }
   .connect-card { padding: 22px; }
   .token-field { flex-direction: column; }
+  .token-field input { height: 58px; padding: 0 18px; }
   .tabs { width: 100%; overflow-x: auto; }
   .tabs button { flex: 1; justify-content: center; white-space: nowrap; }
   .dashboard-grid, .chat-grid, .updates-layout { grid-template-columns: 1fr; }
