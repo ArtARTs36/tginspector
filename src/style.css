@@ -27,7 +27,7 @@ body {
     #0b0e14;
 }
 
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { color: inherit; }
 code, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 code { font-size: .92em; }
@@ -136,7 +136,7 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .details-grid div, .compact-details div { min-width: 0; }
 dt { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 dd { margin: 5px 0 0; font-size: 14px; }
-.action-panel, .webhook-summary, .webhook-panel { padding: 24px; }
+.action-panel, .webhook-summary, .webhook-panel, .send-panel { padding: 24px; }
 .action-panel .primary-button { margin-top: 12px; }
 .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
 .metric-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
@@ -157,11 +157,32 @@ dd { margin: 5px 0 0; font-size: 14px; }
 .updates-chip { align-self: flex-start; white-space: nowrap; padding: 5px 8px; border-radius: 999px; background: #1e2634; color: var(--muted); font-size: 10px; }
 .compact-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 18px 0; margin: 18px 0 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .compact-details div:last-child { grid-column: 1 / -1; }
+.chat-send-button { width: 100%; margin-top: 14px; }
 .threads-block { margin-top: 17px; }
 .threads-title { margin-bottom: 9px; color: #d9e0eb; font-size: 12px; font-weight: 800; }
 .thread-list { display: grid; gap: 6px; }
-.thread-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 8px; background: #0d121a; font-size: 12px; }
+.thread-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 8px; background: #0d121a; font-size: 12px; }
+.thread-actions { display: flex; align-items: center; gap: 4px; }
 .thread-row code { color: var(--accent-strong); }
+
+.send-form { display: grid; gap: 18px; }
+.send-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-field { display: grid; gap: 7px; }
+.form-field > span { color: #dce3ed; font-size: 12px; font-weight: 750; }
+.form-field em { color: var(--muted); font-size: 10px; font-style: normal; font-weight: 500; }
+.send-form input, .send-form textarea {
+  width: 100%; padding: 12px 13px; border: 1px solid var(--border); border-radius: 10px; outline: none;
+  background: #0c1119; color: #f5f7fb; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px;
+}
+.send-form input { min-height: 44px; }
+.send-form textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
+.send-form input:focus, .send-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42, 171, 238, .12); }
+.send-actions { display: flex; align-items: center; gap: 14px; }
+.send-result { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.send-result pre {
+  margin: 12px 0 0; padding: 16px; max-height: 360px; overflow: auto;
+  border-radius: 10px; background: #0c1017; color: #cbd5e3; font-size: 12px; line-height: 1.55;
+}
 
 .updates-layout { display: grid; grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr); gap: 14px; align-items: start; }
 .update-list { max-height: 650px; overflow: auto; padding: 7px; }
@@ -198,12 +219,14 @@ footer a:hover { color: var(--accent-strong); }
   .token-field input { height: 58px; padding: 0 18px; }
   .tabs { width: 100%; overflow-x: auto; }
   .tabs button { flex: 1; justify-content: center; white-space: nowrap; }
-  .dashboard-grid, .chat-grid, .updates-layout { grid-template-columns: 1fr; }
+  .dashboard-grid, .chat-grid, .updates-layout, .send-grid { grid-template-columns: 1fr; }
   .profile-panel { grid-row: auto; }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .section-heading .primary-button, .section-heading .secondary-button { width: 100%; }
   .details-grid, .details-grid.wide { grid-template-columns: 1fr; }
   .full-row { grid-column: auto; }
+  .send-actions { align-items: stretch; flex-direction: column; }
+  .send-actions .primary-button { width: 100%; }
   .updates-layout { min-height: 0; }
   .update-list { max-height: 360px; }
   .raw-panel pre { max-height: 480px; }

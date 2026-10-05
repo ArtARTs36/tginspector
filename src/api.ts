@@ -1,4 +1,10 @@
-import type { TelegramResponse, TelegramUpdate, TelegramUser, WebhookInfo } from './types'
+import type {
+  TelegramMessageLike,
+  TelegramResponse,
+  TelegramUpdate,
+  TelegramUser,
+  WebhookInfo,
+} from './types'
 
 export class TelegramApiError extends Error {
   constructor(
@@ -10,10 +16,24 @@ export class TelegramApiError extends Error {
   }
 }
 
+export interface SendMessageParams {
+  chatId: string
+  messageThreadId?: number
+  text: string
+}
+
 export interface TelegramClient {
   getMe(): Promise<TelegramUser>
   getWebhookInfo(): Promise<WebhookInfo>
   getUpdates(): Promise<TelegramUpdate[]>
+  sendMessage(params: SendMessageParams): Promise<TelegramMessageLike>
+}
+
+function normalizeChatId(chatId: string): string | number {
+  if (!/^-?\d+$/.test(chatId)) return chatId
+
+  const value = Number(chatId)
+  return Number.isSafeInteger(value) ? value : chatId
 }
 
 export function createTelegramClient(token: string): TelegramClient {
@@ -53,5 +73,11 @@ export function createTelegramClient(token: string): TelegramClient {
     getMe: () => call<TelegramUser>('getMe'),
     getWebhookInfo: () => call<WebhookInfo>('getWebhookInfo'),
     getUpdates: () => call<TelegramUpdate[]>('getUpdates', { limit: 100, timeout: 0 }),
+    sendMessage: ({ chatId, messageThreadId, text }) =>
+      call<TelegramMessageLike>('sendMessage', {
+        chat_id: normalizeChatId(chatId),
+        ...(messageThreadId === undefined ? {} : { message_thread_id: messageThreadId }),
+        text,
+      }),
   }
 }

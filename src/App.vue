@@ -8,9 +8,15 @@ import {
   getUpdateTimestamp,
   getUpdateType,
 } from './inspector'
-import type { ObservedChat, TelegramUpdate, TelegramUser, WebhookInfo } from './types'
+import type {
+  ObservedChat,
+  TelegramMessageLike,
+  TelegramUpdate,
+  TelegramUser,
+  WebhookInfo,
+} from './types'
 
-type Tab = 'me' | 'chats' | 'updates' | 'webhook'
+type Tab = 'me' | 'chats' | 'send' | 'updates' | 'webhook'
 
 const tokenInput = ref('')
 const tokenVisible = ref(false)
@@ -23,6 +29,13 @@ const activeTab = ref<Tab>('me')
 const connecting = ref(false)
 const loadingUpdates = ref(false)
 const error = ref('')
+
+const sendChatId = ref('')
+const sendThreadId = ref('')
+const sendText = ref('')
+const sending = ref(false)
+const sendError = ref('')
+const sentMessage = ref<TelegramMessageLike | null>(null)
 
 const observedChats = computed<ObservedChat[]>(() => buildObservedChats(updates.value))
 const selectedUpdate = computed(() => updates.value.find((item) => item.update_id === selectedUpdateId.value) ?? null)
@@ -65,6 +78,11 @@ function disconnect() {
   webhook.value = null
   updates.value = []
   selectedUpdateId.value = null
+  sendChatId.value = ''
+  sendThreadId.value = ''
+  sendText.value = ''
+  sendError.value = ''
+  sentMessage.value = null
   activeTab.value = 'me'
   error.value = ''
 }
@@ -94,6 +112,56 @@ async function loadUpdates() {
     error.value = formatError(cause)
   } finally {
     loadingUpdates.value = false
+  }
+}
+
+function openSend(chatId: number, threadId?: number) {
+  sendChatId.value = formatId(chatId)
+  sendThreadId.value = threadId === undefined ? '' : String(threadId)
+  sendText.value = ''
+  sendError.value = ''
+  sentMessage.value = null
+  activeTab.value = 'send'
+}
+
+async function submitMessage() {
+  if (!client.value) return
+
+  const chatId = sendChatId.value.trim()
+  const text = sendText.value.trim()
+  const threadValue = sendThreadId.value.trim()
+
+  sendError.value = ''
+  sentMessage.value = null
+
+  if (!chatId) {
+    sendError.value = 'chat_id is required.'
+    return
+  }
+
+  if (!text) {
+    sendError.value = 'Message text is required.'
+    return
+  }
+
+  let messageThreadId: number | undefined
+  if (threadValue) {
+    const parsed = Number(threadValue)
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+      sendError.value = 'message_thread_id must be a positive integer.'
+      return
+    }
+    messageThreadId = parsed
+  }
+
+  sending.value = true
+  try {
+    sentMessage.value = await client.value.sendMessage({ chatId, messageThreadId, text })
+    sendText.value = ''
+  } catch (cause) {
+    sendError.value = formatError(cause)
+  } finally {
+    sending.value = false
   }
 }
 
@@ -182,6 +250,7 @@ function formatId(value: number): string {
         <button :class="{ active: activeTab === 'chats' }" @click="activeTab = 'chats'">
           Chats <span class="count-badge">{{ observedChats.length }}</span>
         </button>
+        <button :class="{ active: activeTab === 'send' }" @click="activeTab = 'send'">Send</button>
         <button :class="{ active: activeTab === 'updates' }" @click="activeTab = 'updates'">
           Updates <span class="count-badge">{{ updates.length }}</span>
         </button>
@@ -271,18 +340,91 @@ function formatId(value: number): string {
               <div><dt>Last seen</dt><dd>{{ formatDate(item.lastSeenAt) }}</dd></div>
             </dl>
 
+            <button class="secondary-button chat-send-button" type="button" @click="openSend(item.chat.id)">
+              Send to chat
+            </button>
+
             <div class="threads-block">
               <div class="threads-title">Threads</div>
               <p v-if="!item.threads.length" class="muted small">No <code>message_thread_id</code> observed.</p>
               <div v-else class="thread-list">
                 <div v-for="thread in item.threads" :key="thread.id" class="thread-row">
                   <span>{{ thread.title }}</span>
-                  <code>{{ thread.id }}</code>
+                  <div class="thread-actions">
+                    <code>{{ thread.id }}</code>
+                    <button class="link-button" type="button" @click="openSend(item.chat.id, thread.id)">Send</button>
+                  </div>
                 </div>
               </div>
             </div>
           </article>
         </div>
+      </section>
+
+      <section v-else-if="activeTab === 'send'" class="content-stack">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">sendMessage</div>
+            <h2>Send a message</h2>
+            <p class="muted">Use <code>chat_id</code> alone for a regular chat, or add <code>message_thread_id</code> for a forum topic.</p>
+          </div>
+        </div>
+
+        <article class="panel send-panel">
+          <form class="send-form" @submit.prevent="submitMessage">
+            <div class="send-grid">
+              <label class="form-field" for="send-chat-id">
+                <span>chat_id</span>
+                <input
+                  id="send-chat-id"
+                  v-model="sendChatId"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="-1001234567890 or @channel"
+                />
+              </label>
+
+              <label class="form-field" for="send-thread-id">
+                <span>message_thread_id <em>optional</em></span>
+                <input
+                  id="send-thread-id"
+                  v-model="sendThreadId"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="2"
+                />
+              </label>
+            </div>
+
+            <label class="form-field" for="send-text">
+              <span>Text</span>
+              <textarea
+                id="send-text"
+                v-model="sendText"
+                rows="6"
+                maxlength="4096"
+                placeholder="Message text"
+              />
+            </label>
+
+            <div class="send-actions">
+              <button class="primary-button" type="submit" :disabled="sending">
+                {{ sending ? 'Sending…' : 'Send message' }}
+              </button>
+              <span class="muted small">Sent directly from this browser through Telegram Bot API.</span>
+            </div>
+          </form>
+
+          <div v-if="sendError" class="error-banner" role="alert">{{ sendError }}</div>
+
+          <div v-if="sentMessage" class="send-result">
+            <div class="success-text">
+              Sent<span v-if="sentMessage.message_id"> · message_id <code>{{ sentMessage.message_id }}</code></span>
+            </div>
+            <pre>{{ JSON.stringify(sentMessage, null, 2) }}</pre>
+          </div>
+        </article>
       </section>
 
       <section v-else-if="activeTab === 'updates'" class="content-stack">

@@ -19,9 +19,10 @@ The Bot API requires the token in the Telegram request path, so it remains visib
 - `getMe`
 - `getWebhookInfo`
 - `getUpdates` without `offset` (does not acknowledge returned updates)
+- `sendMessage` to a `chat_id` with optional `message_thread_id`
 - observed chats derived from pending updates
 - observed `message_thread_id` values and forum topic names when present
-- raw update JSON
+- raw update and send response JSON
 
 Telegram does not expose a `listChats` Bot API method. Chat and thread lists therefore contain only entities observed in the updates available to the bot. `getUpdates` is unavailable while an outgoing webhook is configured; tginspector never removes a webhook automatically.
 
